@@ -1,32 +1,90 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view />
-  </div>
+	<div id="app">
+		<h1> Tasks to do</h1>
+		 <TasksProgress :progress="progress" /> 
+		<NewTask @taskAdded="addTask"/>
+		<TaskGrid :tasks="tasks"
+		@taskDeleted="deleteTask"
+		@taskStateChanged="toggleTaskState"/>
+	</div>
 </template>
 
+<script>
+import TasksProgress from './components/TaskProgress.vue'
+import NewTask from './components/NewTask.vue'
+import TaskGrid from './components/TaskGrid.vue'
+
+export default {
+	components: { TasksProgress, NewTask, TaskGrid },
+	
+	data () {
+		return{
+			tasks:[
+				
+			]
+		}
+	},
+	computed: {
+		progress() {
+			const total = this.tasks.length
+			const done = this.tasks.filter(t => !t.pending).length
+			return Math.round(done / total * 100 ) || 0
+		}
+	},
+	watch: {
+		tasks: {
+			deep: true, 
+			handler() {
+				localStorage.setItem('tasks', JSON.stringify(this.tasks))
+			}
+		}
+	},
+	methods: {
+		addTask(task) {
+			const sameName = t => t.name === task.name
+			const reallyNew = this.tasks.filter(sameName).length == 0 
+			if(reallyNew) {
+				this.tasks.push ({
+					name: task.name, 
+					pending: task.pending || true 
+				})
+			}
+		},
+		deleteTask(i) {
+			this.tasks.splice(i, 1)
+		},
+		toggleTaskState(i) {
+			this.tasks[i].pending = !this.tasks[i].pending
+		}
+	},
+	created() {
+		const json = localStorage.getItem('tasks')
+		const array = JSON.parse(json)
+		this.tasks = Array.isArray(array) ? array : []
+	}
+
+}
+</script>
+
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+	body {
+		font-family: 'Lato', sans-serif;
+		background: linear-gradient(to right, rgb(22, 34, 42), rgb(58, 96, 115));
+		color: #FFF;
+	}
 
-#nav {
-  padding: 30px;
-}
+	#app {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+	}
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
+	#app h1 {
+		margin-bottom: 5px;
+		font-weight: 300;
+		font-size: 3rem;
+	}
 </style>
